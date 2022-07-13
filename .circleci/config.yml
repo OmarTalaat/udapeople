@@ -484,12 +484,4 @@ workflows:
       - cleanup:
           requires: [cloudfront-update]
       - notify_on_successful:
-          requires: 
-            - deploy-infrastructure 
-            - configure-infrastructure 
-            - run-migrations 
-            - deploy-frontend 
-            - deploy-backend 
-            - smoke-test 
-            - cloudfront-update 
-            - cleanup
+          requires: [cleanup]
