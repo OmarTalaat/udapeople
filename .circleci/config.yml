@@ -372,20 +372,31 @@ jobs:
       - destroy-environment
       - revert-migrations
 
-  # cloudfront-update:
-  #   docker:
-  #     # Docker image here that supports AWS CLI
-  #   steps:
-  #     # Checkout code from git
-  #     - run:
-  #         name: Install dependencies
-  #         command: |
-  #           # your code here
-  #     - run:
-  #         name: Update cloudfront distribution
-  #         command: |
-  #           # your code here
-  #     - destroy-environment
+  cloudfront-update:
+    docker:
+        - image: cimg/base:stable
+    steps:
+      - checkout
+      - aws-cli/setup
+      - node/install:
+          node-version: '13.8.0'
+      - run:
+          name: save old work flow id
+          command: |
+            export oldworkflowId=$(aws cloudformation \
+              list-exports --query "Exports[?Name==\`WORKFLOW_ID\`].Value" \
+              --no-paginate --output text )
+            echo "old work flow id: $oldworkflowId"
+            curl https://kvdb.io/JeKSH41hhLLsFDYSSchKwz/workflowId -d "${oldworkflowId}"
+      - run:
+          name: Update cloudfront distribution
+          command: |
+            aws cloudformation deploy \
+            --template-file .circleci/files/cloudfront.yml \
+            --stack-name InitialStack \
+            --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}"
+      - destroy-environment
+      - revert-migrations
 
 # cleanup:
 #     docker:
