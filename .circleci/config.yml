@@ -239,6 +239,7 @@ jobs:
             cd .circleci/ansible
             cat inventory.txt
             ansible-playbook -i inventory.txt configure-server.yml
+      - notify_on_fail
       - destroy-environment
 
   run-migrations:
@@ -260,6 +261,7 @@ jobs:
                 then
                   curl -d  '1'  https://kvdb.io/JeKSH41hhLLsFDYSSchKwz/migration_${CIRCLE_WORKFLOW_ID:0:7} 
                 fi
+      - notify_on_fail
       - destroy-environment
       - revert-migrations
 
@@ -292,6 +294,7 @@ jobs:
           command: |
             npm run frontend:build
             aws s3 cp ./frontend/dist  s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+      - notify_on_fail
       - destroy-environment
       - revert-migrations
   deploy-backend:
@@ -333,7 +336,7 @@ jobs:
             cd .circleci/ansible
             cat inventory.txt
             ansible-playbook -i inventory.txt  deploy-backend.yml
-
+      - notify_on_fail
       - destroy-environment
       - revert-migrations
 
@@ -369,6 +372,7 @@ jobs:
             else 
               exit 1
             fi
+      - notify_on_fail
       - destroy-environment
       - revert-migrations
 
@@ -381,13 +385,13 @@ jobs:
       - node/install:
           node-version: '13.8.0'
       - run:
-          name: save old work flow id
+          name: get oldWorkflowID and save oldWorkflowID in kvdb.io
           command: |
-            export oldworkflowId=$(aws cloudformation \
-              list-exports --query "Exports[?Name==\`WORKFLOW_ID\`].Value" \
+            export OldWorkflowID=$(aws cloudformation \
+              list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
               --no-paginate --output text )
-            echo "old work flow id: $oldworkflowId"
-            curl https://kvdb.io/JeKSH41hhLLsFDYSSchKwz/workflowId -d "${oldworkflowId}"
+            echo "old work flow id: $OldWorkflowID"
+            curl -d "${OldWorkflowID}" https://kvdb.io/JeKSH41hhLLsFDYSSchKwz/WorkflowID
       - run:
           name: Update cloudfront distribution
           command: |
@@ -395,27 +399,42 @@ jobs:
             --template-file .circleci/files/cloudfront.yml \
             --stack-name InitialStack \
             --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}"
+      - notify_on_fail
       - destroy-environment
       - revert-migrations
 
-# cleanup:
-#     docker:
-#       # Docker image here
-#     steps:
-#       # Checkout code from git
-#       - run:
-#           name: Get old stack workflow id
-#           command: |
-#             # your code here
-#             export OldWorkflowID="the id here"
-#             export STACKS=[] #put the list of stacks here
-#       - run:
-#           name: Remove old stacks and files
-#           command: |
-#             if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
-#             then
-#               # your code here
-#             fi
+  cleanup:
+    docker:
+      - image: cimg/base:stable
+    parameters:
+      Old_WORKFLOW_ID:
+        type: string
+        default: $(curl   https://kvdb.io/JeKSH41hhLLsFDYSSchKwz/WorkflowID )
+    steps:
+      - checkout
+      - aws-cli/setup
+      - node/install:
+          node-version: '13.8.0'
+      - run:
+          name: Get old list of stacks and workflowId
+          command: |
+            export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
+              --stack-status-filter CREATE_COMPLETE --no-paginate --output text))
+
+            echo Old WorkFlow Id: "<<parameters.Old_WORKFLOW_ID>>"
+            echo Stack Name: "${STACKS[@]}"
+
+      - run:
+          name: Remove old stacks and files
+          command: |
+            if [[ "${STACKS[@]}" =~ "<<parameters.Old_WORKFLOW_ID>>" ]]
+            then
+              aws cloudformation delete-stack --stack-name udapeople-backend-<<parameters.Old_WORKFLOW_ID>>
+              aws cloudformation wait stack-delete-complete --stack-name udapeople-backend-<<parameters.Old_WORKFLOW_ID>>
+              aws s3 rm s3://udapeople-<<parameters.Old_WORKFLOW_ID>> --recursive
+              aws cloudformation delete-stack --stack-name udapeople-frontend-<<parameters.Old_WORKFLOW_ID>>
+              aws cloudformation wait stack-delete-complete --stack-name udapeople-frontend-<<parameters.Old_WORKFLOW_ID>>
+            fi
 
 
 
@@ -463,7 +482,15 @@ workflows:
           requires: [deploy-backend, deploy-frontend]
       - cloudfront-update:
           requires: [smoke-test]
-      # - cleanup:
-      #     requires: [cloudfront-update]
-      #- notify_on_successful:
-       #   requires: [deploy-infrastructure , configure-infrastructure , run-migrations , deploy-frontend , deploy-backend , smoke-test ,cloudfront-update , cleanup]
+      - cleanup:
+          requires: [cloudfront-update]
+      - notify_on_successful:
+          requires: 
+            - deploy-infrastructure 
+            - configure-infrastructure 
+            - run-migrations 
+            - deploy-frontend 
+            - deploy-backend 
+            - smoke-test 
+            - cloudfront-update 
+            - cleanup

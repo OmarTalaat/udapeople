@@ -4,7 +4,7 @@ In this section, you will practice creating and configuring infrastructure befor
 
 ### Setup
 
-#### AWS
+#### AWS (done)
 1. Create and download a new key pair in AWS for CircleCI to use to work with AWS resources. Name this key pair "udacity" so that it works with your Cloud Formation templates. [This tutorial may help](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html#having-ec2-create-your-key-pair) (look for "Option 1: Create a key pair using Amazon EC2"). You'll be using this key pair (pem file) in future steps so keep it in a memorable location. 
 2. Create IAM user for programmatic access only and copy the id and access keys. [This tutorial may help.](https://serverless-stack.com/chapters/create-an-iam-user.html) You'll need these keys if you want to try any AWS commands from your own command line. You'll also need these credentials to add to CircleCI configuration in the next steps.
 3. Add a PostgreSQL database in RDS that has **public accessibility**. Take note of the connection details (hostname, username, password). [This tutorial may help.](https://aws.amazon.com/getting-started/tutorials/create-connect-postgresql-db/) As long as you marked "Public Accessibility" as "yes", you won't need to worry about VPC settings or security groups.
@@ -21,11 +21,12 @@ At the very end of the pipeline, you will need to make a switch from the old inf
 
 Once that is done, subsequent executions of that template will modify the same CloudFront distribution to make the blue-to-green switch without fail.
 
-#### Circle CI
+#### Circle CI (done)
 
 Please watch the [video walkthrough of setting up your secrets here](https://www.youtube.com/watch?v=caFJQ1YwVdU).
 
 1. Add SSH Key pair from EC2 as shown [here](https://circleci.com/docs/2.0/add-ssh-key/). To get the actual key pair, you'll need to open the pem file in a text editor and copy the contents. Then you can paste them into Circle CI.
+(done)
 
 2. Add the following environment variables to your Circle CI project by navigating to {project name} > Settings > Environment Variables as shown [here](https://circleci.com/docs/2.0/settings/):
   - `AWS_ACCESS_KEY_ID`=(from IAM user with programmatic access)
@@ -40,6 +41,7 @@ Please watch the [video walkthrough of setting up your secrets here](https://www
   - `TYPEORM_USERNAME`={your postgres database username in RDS}
   - `TYPEORM_PASSWORD`={your postgres database password in RDS}
   - `TYPEORM_DATABASE`={your postgres database name in RDS}
+  (done)
 
 _NOTE:_ Some AWS-related jobs may take awhile to complete. If a job takes too long, it could cause a timeout. If this is the case, just restart the job and keep your fingers crossed for faster network traffic. If this happens often, you might consider increasing the job timeout [as described here](https://support.circleci.com/hc/en-us/articles/360007188574-Build-has-hit-timeout-limit).
 
@@ -51,7 +53,7 @@ Setting up servers and infrastructure is complicated business. There are many, m
 
 In this phase, you will add CircleCI jobs that execute Cloud Formation templates that create infrastructure as well as jobs that execute Ansible Playbooks to configure that newly created infrastructure.
 
-##### Create/Deploy Infrastructure
+##### Create/Deploy Infrastructure (done)
 
 - Find the job named `deploy-infrastructure` in your config file
   - Add code to create your infrastructure using [CloudFormation templates](https://github.com/udacity/cdond-c3-projectstarter/tree/master/.circleci/files). Again, provide a screenshot demonstrating an appropriate job failure (failing for the right reasons). **[SCREENSHOT05]**
@@ -72,7 +74,7 @@ In this phase, you will add CircleCI jobs that execute Cloud Formation templates
   - Generate an inventory file for use with Ansible by using AWS CLI to append the newly created backend IP to the [provided](https://github.com/udacity/cdond-c3-projectstarter/blob/master/.circleci/ansible/inventory.txt) inventory file.
     - Persist the modified inventory file to the workspace so that we can use that file in future jobs.
   
-##### Configure Infrastructure
+##### Configure Infrastructure (done)
 
 - Find the job named `configure-infrastructure` in the config file.
   - Write code to set up the EC2 intance to run as our back-end.
@@ -99,11 +101,11 @@ In this phase, you will add CircleCI jobs that execute Cloud Formation templates
 
 - Provide a URL to your public GitHub repository. **[URL01]**
 
-#### 2. Deploy Phase
+#### 2. Deploy Phase (done)
 
 Now that the infrastructure is up and running, it’s time to configure for dependencies and move our application files over. UdaPeople used to have this ops guy in the other building to make the copy every Friday, but now they want to make a full deploy on every single commit. Luckily for UdaPeople, you’re about to add a job that handles this automatically using Ansible. The ops guy will finally have enough time to catch up on his Netflix playlist.
 
-##### Database migrations
+##### Database migrations (done)
 
 - Find the job named `run-migrations` in the config file.
   - Select a Docker image that's compatible with NodeJS.
@@ -111,9 +113,9 @@ Now that the infrastructure is up and running, it’s time to configure for depe
     - Save some evidence that any new migrations ran. This is useful information if you need to roll back. Hint: The migration output will include `"has been executed successfully"` if any new migrations were applied.
       - Save the output to a file or variable.
       - Use `grep` to check for text that shows that a new migration was applied.
-      - If true, send a "1" (or any value at all) to [MemStash.io](https://memstash.io) using a key that is bound to the workflow id like `migration_${CIRCLE_WORKFLOW_ID}`.
+      - If true, send a "1" (or any value at all) to [kvdb.io) using a key that is bound to the workflow id like `migration_${CIRCLE_WORKFLOW_ID}`.
 
-##### Deploy Front-end
+##### Deploy Front-end (done)
 
 - Find the job named `deploy-frontend` in the config file.
   - Select a Docker image that can handle the AWS CLI.
@@ -125,7 +127,7 @@ Now that the infrastructure is up and running, it’s time to configure for depe
     - Copy the files to your new S3 Bucket using AWS CLI (compiled front-end files can be found in a folder called `./dist`).
 - Provide the public URL for your S3 Bucket (aka, your front-end). **[URL02]**
 
-##### Deploy Back-end
+##### Deploy Back-end (done)
 
 - Find the job named `deploy-backend` in the config file.
   - Select a Docker image that is compatible with Ansible.
@@ -135,7 +137,7 @@ Now that the infrastructure is up and running, it’s time to configure for depe
     - Install any necessary dependencies.
     - Use Ansible to copy the files (compiled back-end files can be found in a folder called `./dist`).
 
-#### 3. Smoke Test Phase
+#### 3. Smoke Test Phase (done)
 
 All this automated deployment stuff is great, but what if there’s something we didn’t plan for that made it through to production? What if the UdaPeople website is now down due to a runtime bug that our unit tests didn’t catch? Users won’t be able to access their data! This same situation can happen with manual deployments, too. In a manual deployment situation, what’s the first thing you do after you finish deploying? You do a “smoke test” by going to the site and making sure you can still log in or navigate around. You might do a quick `curl` on the backend to make sure it is responding. In an automated scenario, you can do the same thing through code. Let’s add a job to provide the UdaPeople team with a little sanity check.
 
@@ -164,7 +166,7 @@ All this automated deployment stuff is great, but what if there’s something we
 
 ![Job properly failing because of a failed smoke test.](screenshots/SCREENSHOT06.png)
 
-#### 4. Rollback Phase
+#### 4. Rollback Phase (done)
 
 Of course, we all hope every pipeline follows the “happy path.” But any experienced UdaPeople developer knows that it’s not always the case. If the smoke test fails, what should we do? The smart thing would be to hit CTRL-Z and undo all our changes. But is it really that easy? It will be once you build the next job!
 
@@ -182,7 +184,7 @@ Of course, we all hope every pipeline follows the “happy path.” But any expe
 
 - Add these rollback commands to other jobs that might fail and need a rollback.
 
-#### 5. Promotion Phase
+#### 5. Promotion Phase(done)
 
 Assuming the smoke test came back clean, we should have a relatively high level of confidence that our deployment was a 99% success. Now’s time for the last 1%. UdaPeople uses the “Blue-Green Deployment Strategy” which means we deployed a second environment or stack next to our existing production stack. Now that we’re sure everything is "A-okay", we can switch from blue to green. 
 
@@ -198,7 +200,7 @@ Assuming the smoke test came back clean, we should have a relatively high level 
 - Provide the public URL for your CloudFront distribution (aka, your production front-end). **[URL03]**
 - Provide the public URL for your back-end server in EC2. **[URL04]**
 
-#### 6. Cleanup Phase
+#### 6. Cleanup Phase(done)
 
 The UdaPeople finance department likes it when your AWS bills are more or less the same as last month OR trending downward. But, what if all this “Blue-Green” is leaving behind a trail of dead-end production environments? That upward trend probably means no Christmas bonus for the dev team. Let’s make sure everyone at UdaPeople has a Merry Christmas by adding a job to clean up old stacks.
 
@@ -220,7 +222,7 @@ The UdaPeople finance department likes it when your AWS bills are more or less t
 
 ![Successful cleanup job.](screenshots/SCREENSHOT09.png)
 
-#### Other Considerations
+#### Other Considerations (done)
 
 - Make sure you only run deployment-related jobs on commits to the `master` branch. Provide screenshot of a build triggered by a non-master commit. It should only run the jobs prior to deployment. **[SCREENSHOT10]**
 
