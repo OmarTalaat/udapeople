@@ -465,7 +465,6 @@ workflows:
            - test-backend
            - scan-frontend
            - scan-backend
-           - notify_on_successful
           filters:
             branches:
               only:
