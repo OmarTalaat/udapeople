@@ -7,7 +7,7 @@
         "frontend:test": "cd frontend &&  npm run  test",
         "backend:test": "cd backend &&  npm run  test",
         "frontend:audit": "cd frontend && npm audit fix --audit-level=critical --force && npm audit --audit-level=critical ",
-        "backend:audit": "cd backend  && npm install && npm audit",
+        "backend:audit": "cd backend  && npm install && npm audit fix --audit-level=critical --force && npm audit fix --audit-level=critical --force  && npm audit --audit-level=critical ",
         "migration:backend": "cd backend &&  npm run migrations",
         "backend:migrations:revert": "cd backend && npm run migrations:revert",
         "frontend:deploy" : " cd frontend && npm run build &&  npm run deploy"
