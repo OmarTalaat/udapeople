@@ -8,10 +8,11 @@
     http://d35hx2uy9zcqu1.cloudfront.net/#/employees
 
 4. Public URLs to deployed application back-end in EC2 [URL04]
-        curl http://3.232.0.53:3030/api/status
-        curl http://ec2-3-232-0-53.compute-1.amazonaws.com:3030/api/status
+         http://3.232.0.53:3030/api/status
+         http://ec2-3-232-0-53.compute-1.amazonaws.com:3030/api/status
 
 
 5. Public URL to  Prometheus Server [URL05]
         http://3.91.241.243:9090/graph?g0.expr=&g0.tab=1&g0.stacked=0&g0.show_exemplars=0&g0.range_input=1h
    
+    for target http://3.91.241.243:9090/targets?search=
