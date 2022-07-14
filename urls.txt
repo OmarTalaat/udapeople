@@ -15,4 +15,4 @@
 5. Public URL to  Prometheus Server [URL05]
         http://3.91.241.243:9090/graph?g0.expr=&g0.tab=1&g0.stacked=0&g0.show_exemplars=0&g0.range_input=1h
    
-    for target http://3.91.241.243:9090/targets?search=
+    for target page http://3.91.241.243:9090/targets?search=
